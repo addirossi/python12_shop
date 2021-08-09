@@ -2,10 +2,11 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, \
+    CreateAPIView
 
 from product.models import Product
-from product.serializers import ProductSerializer
+from product.serializers import ProductSerializer, ProductDetailsSerializer, CreateProductSerializer
 
 
 def test_view(request):
@@ -29,7 +30,14 @@ class ProductsListView(ListAPIView):
     serializer_class = ProductSerializer
 
 
+class ProductDetailsView(RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductDetailsSerializer
 
+
+class CreateProductView(CreateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = CreateProductSerializer
 
 # Product.objects.all() - выдаёт весь список объектов модели
 # SELECT * FROM product;
