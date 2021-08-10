@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView, \
-    CreateAPIView
+    CreateAPIView, UpdateAPIView, DestroyAPIView
 
 from product.models import Product
 from product.serializers import ProductSerializer, ProductDetailsSerializer, CreateProductSerializer
@@ -38,6 +38,48 @@ class ProductDetailsView(RetrieveAPIView):
 class CreateProductView(CreateAPIView):
     queryset = Product.objects.all()
     serializer_class = CreateProductSerializer
+
+
+class UpdateProductView(UpdateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = CreateProductSerializer
+
+
+class DeleteProductView(DestroyAPIView):
+    queryset = Product.objects.all()
+    serializer_class = CreateProductSerializer
+
+
+#TODO: Создавать, редактировать и удалять продукты могут только админы (permission)
+#TODO: Пагинация (разбивка листинга на страницы)
+#TODO: Фильтрация
+#TODO: Поиск продуктов по названию и описанию
+#TODO: ограничение количества запросов
+#TODO: тесты
+#TODO: Отзывы
+#TODO: Разобрать взаимодействие
+
+# REST - архитектурный подход
+# 1. Модель клиент - сервер
+# 2. Отсутствие состояния
+# 3. Кэширование
+# 4. Единообразие интерфейса
+# 1. определение ресурсов
+# URI ('api/v1/products/1/')
+
+# 2. управление ресурсом через представление
+# 3. самодостаточные сообщения
+# 4. гипермедиа
+# 5. Слои
+# 6. Код по требованию
+#
+# 'GET',    'POST',     'PUT',     'PATCH',            'DELETE'
+# list       create     update     partial_update       destroy
+# retrieve
+
+
+# API (Application Programming Interface)
+# паттерн MVC
 
 # Product.objects.all() - выдаёт весь список объектов модели
 # SELECT * FROM product;
@@ -87,16 +129,16 @@ class CreateProductView(CreateAPIView):
 # ILIKE
 
 # 'work%'
-Product.objects.filter(title__startswith='Apple')
+# Product.objects.filter(title__startswith='Apple')
 # SELECT * FROM product WHERE title LIKE 'Apple%';
-Product.objects.filter(title__istartswith='Apple')
+# Product.objects.filter(title__istartswith='Apple')
 # SELECT * FROM product WHERE title ILIKE 'Apple%';
 
 # '%work'
-Product.objects.filter(title__endswith='GB')
+# Product.objects.filter(title__endswith='GB')
 # SELECT * FROM product WHERE title LIKE '%GB';
 
-Product.objects.filter(title__iendswith='GB')
+# Product.objects.filter(title__iendswith='GB')
 # SELECT * FROM product WHERE title ILIKE '%GB';
 
 # '%work%'

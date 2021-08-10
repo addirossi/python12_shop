@@ -19,7 +19,8 @@ from django.contrib.staticfiles.urls import static
 from django.urls import path
 
 from product.views import (test_view, products_list, ProductsListView,
-                           ProductDetailsView, CreateProductView)
+                           ProductDetailsView, CreateProductView,
+                           UpdateProductView, DeleteProductView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,5 +28,6 @@ urlpatterns = [
     path('api/v1/products/', ProductsListView.as_view()),
     path('api/v1/products/details/<int:pk>/', ProductDetailsView.as_view()),
     path('api/v1/products/create/', CreateProductView.as_view()),
+    path('api/v1/products/update/<int:pk>/', UpdateProductView.as_view()),
+    path('api/v1/products/delete/<int:pk>/', DeleteProductView.as_view()),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
