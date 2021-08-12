@@ -16,7 +16,7 @@ Including another URLconf
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.staticfiles.urls import static
-from django.urls import path
+from django.urls import path, include
 
 from product.views import (test_view, products_list, ProductsListView,
                            ProductDetailsView, CreateProductView,
@@ -30,4 +30,5 @@ urlpatterns = [
     path('api/v1/products/create/', CreateProductView.as_view()),
     path('api/v1/products/update/<int:pk>/', UpdateProductView.as_view()),
     path('api/v1/products/delete/<int:pk>/', DeleteProductView.as_view()),
+    path('api/v1/', include('account.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
