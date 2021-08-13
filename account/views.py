@@ -1,12 +1,13 @@
-from django.shortcuts import render
+from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 
 from .serializers import (RegistrationSerializer, ActivationSerializer,
                           ChangePasswordSerializer, ForgotPasswordSerializer,
-                          LoginSerializer)
+                          LoginSerializer, ForgotPassCompleteSerializer)
 
 
 class RegistrationView(APIView):
@@ -30,13 +31,34 @@ class LoginView(ObtainAuthToken):
     serializer_class = LoginSerializer
 
 
-class LogoutView():
-    pass
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        Token.objects.filter(user=user).delete()
+        return Response('Вы успешно разлогинились')
 
 
-class ChangePasswordView():
-    pass
+class ChangePasswordView(APIView):
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.set_new_password()
+            return Response('Пароль успешно обновлён')
 
 
-class ForgotPasswordView():
-    pass
+class ForgotPasswordView(APIView):
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.send_verification_email()
+            return Response('Вам выслано сообщение для восстановления')
+
+
+class ForgotPasswordCompleteView(APIView):
+    def post(self, request):
+        serializer = ForgotPassCompleteSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.set_new_password()
+            return Response('Пароль успешно обновлён')
