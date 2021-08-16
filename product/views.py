@@ -1,56 +1,117 @@
 from django.http import HttpResponse
-from rest_framework.decorators import api_view
+from rest_framework import viewsets, mixins
+from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView, \
     CreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
-from product.models import Product
-from product.serializers import ProductSerializer, ProductDetailsSerializer, CreateProductSerializer
+from product.models import Product, ProductReview
+from product.permissions import IsAuthorOrIsAdmin
+from product.serializers import (ProductSerializer, ProductDetailsSerializer,
+                                 CreateProductSerializer, ReviewSerializer)
 
 
-def test_view(request):
-    return HttpResponse('Hello World!')
+# def test_view(request):
+#     return HttpResponse('Hello World!')
+
+#
+# @api_view(['GET'])
+# def products_list(request):
+#     products = Product.objects.all()
+#     serializer = ProductSerializer(products, many=True)
+#     return Response(serializer.data)
+#
+# class ProductsListView(APIView):
+#     def get(self, request):
+#         products = Product.objects.all()
+#         serializer = ProductSerializer(products, many=True)
+#         return Response(serializer.data)
+#
+# class ProductsListView(ListAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = ProductSerializer
+#
+#
+# class ProductDetailsView(RetrieveAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = ProductDetailsSerializer
+#
+#
+# class CreateProductView(CreateAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = CreateProductSerializer
+#
+#
+# class UpdateProductView(UpdateAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = CreateProductSerializer
+#
+#
+# class DeleteProductView(DestroyAPIView):
+#     queryset = Product.objects.all()
+#     serializer_class = CreateProductSerializer
 
 
-@api_view(['GET'])
-def products_list(request):
-    products = Product.objects.all()
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
-
-class ProductsListView(APIView):
-    def get(self, request):
-        products = Product.objects.all()
-        serializer = ProductSerializer(products, many=True)
-        return Response(serializer.data)
-
-class ProductsListView(ListAPIView):
+class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+
+    # def create(self, request, *args, **kwargs):
+    #     if not (request.user.is_authenticated and request.user.is_staff):
+    #         return Response('Создавать продукты может только админ',
+    #                         status=403)
+    #     data = request.data
+    #     serializer = self.get_serializer(data=data,
+    #                                      context={'request': request})
+    #     serializer.is_valid(raise_exception=True)
+    #     return Response(serializer.data, status=201)
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ProductSerializer
+        elif self.action == 'retrieve':
+            return ProductDetailsSerializer
+        return CreateProductSerializer
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return []
+
+    #api/v1/products/id
+    #api/v1/products/id/reviews/
+    @action(['GET'], detail=True)
+    def reviews(self, request, pk=None):
+        product = self.get_object()
+        # reviews = ProductReview.objects.filter(product=product)
+        reviews = product.reviews.all()
+        # [review1, review2]
+        serializer = ReviewSerializer(reviews, many=True)
+        # [{}, {}]
+        return Response(serializer.data, status=200)
 
 
-class ProductDetailsView(RetrieveAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductDetailsSerializer
+# CRUD(Create,  Retrieve,    Update,     Delete)
+#        POST     GET      PUT, PATCH    DELETE
 
 
-class CreateProductView(CreateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = CreateProductSerializer
+class ReviewViewSet(mixins.CreateModelMixin,
+                    mixins.UpdateModelMixin,
+                    mixins.DestroyModelMixin,
+                    viewsets.GenericViewSet):
+    queryset = ProductReview.objects.all()
+    serializer_class = ReviewSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAuthenticated()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), IsAuthorOrIsAdmin()]
+        return []
 
 
-class UpdateProductView(UpdateAPIView):
-    queryset = Product.objects.all()
-    serializer_class = CreateProductSerializer
-
-
-class DeleteProductView(DestroyAPIView):
-    queryset = Product.objects.all()
-    serializer_class = CreateProductSerializer
-
-
-#TODO: Создавать, редактировать и удалять продукты могут только админы (permission)
+#TODO: ViewSet для отзывов, листинг будет в товарах, деталей нет
 #TODO: Пагинация (разбивка листинга на страницы)
 #TODO: Фильтрация
 #TODO: Поиск продуктов по названию и описанию
