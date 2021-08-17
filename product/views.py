@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.views import View
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
@@ -6,6 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView, \
     CreateAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from django_filters import rest_framework as filters
+from rest_framework import filters as rest_filters
 
 from product.models import Product, ProductReview
 from product.permissions import IsAuthorOrIsAdmin
@@ -54,18 +57,36 @@ from product.serializers import (ProductSerializer, ProductDetailsSerializer,
 #     serializer_class = CreateProductSerializer
 
 
+class ProductFilter(filters.FilterSet):
+    price_from = filters.NumberFilter('price', 'gte')
+    price_to = filters.NumberFilter('price', 'lte')
+
+    class Meta:
+        model = Product
+        fields = ('price_from', 'price_to')
+
+
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
+    filter_backends = [filters.DjangoFilterBackend,
+                       rest_filters.SearchFilter,
+                       rest_filters.OrderingFilter]
+    # filterset_fields = ('price')
+    filterset_class = ProductFilter
+    search_fields = ['title', 'description']
+    ordering_fields = ['title', 'price']
 
-    # def create(self, request, *args, **kwargs):
-    #     if not (request.user.is_authenticated and request.user.is_staff):
-    #         return Response('Создавать продукты может только админ',
-    #                         status=403)
-    #     data = request.data
-    #     serializer = self.get_serializer(data=data,
-    #                                      context={'request': request})
-    #     serializer.is_valid(raise_exception=True)
-    #     return Response(serializer.data, status=201)
+    # api/v1/products/
+    # api/v1/products/?price_from=10000&price_to=15000
+
+    # def get_queryset(self):
+    #     queryset = super().get_queryset()
+    #     print(queryset)
+    #     print(self.request.query_params)
+    #     price_from = self.request.query_params.get('price_from')
+    #     price_to = self.request.query_params.get('price_to')
+    #     queryset = queryset.filter(price__gte=price_from, price__lte=price_to)
+    #     return queryset
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -79,8 +100,6 @@ class ProductViewSet(viewsets.ModelViewSet):
             return [IsAdminUser()]
         return []
 
-    #api/v1/products/id
-    #api/v1/products/id/reviews/
     @action(['GET'], detail=True)
     def reviews(self, request, pk=None):
         product = self.get_object()
@@ -111,14 +130,10 @@ class ReviewViewSet(mixins.CreateModelMixin,
         return []
 
 
-#TODO: ViewSet для отзывов, листинг будет в товарах, деталей нет
-#TODO: Пагинация (разбивка листинга на страницы)
-#TODO: Фильтрация
-#TODO: Поиск продуктов по названию и описанию
 #TODO: ограничение количества запросов
 #TODO: тесты
-#TODO: Отзывы
-#TODO: Разобрать взаимодействие
+#TODO: документация
+#TODO: README
 
 # REST - архитектурный подход
 # 1. Модель клиент - сервер
