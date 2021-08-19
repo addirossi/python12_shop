@@ -216,7 +216,7 @@ class TestReviews(APITestCase):
             text='awdsrdtfdsaw',
             rating=3
         )
-        self.review1 = ProductReview.objects.create(
+        self.review2 = ProductReview.objects.create(
             product=self.product2,
             author=self.user,
             text='dada3eafwdwdadawf',
@@ -239,10 +239,100 @@ class TestReviews(APITestCase):
         client.credentials(HTTP_AUTHORIZATION=f'Token {self.user_token.key}')
         url = reverse('productreview-list')
         response = client.post(url, data=self.payload)
-        print(response.data)
         self.assertEqual(response.status_code, 201)
+
+    def test_create_duplicated_review(self):
+        data = self.payload.copy()
+        data['product'] = self.product1.id
+        client = self.client_class()
+        client.credentials(HTTP_AUTHORIZATION=f'Token {self.user_token.key}')
+        url = reverse('productreview-list')
+        response = client.post(url, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('product', response.data)
+
+    def test_create_review_with_wrong_rating_400(self):
+        '''Тест проверяет создание отзыва с рейтингом,
+        который выше 5. Ожидаемый статус: 400'''
+        data = self.payload.copy()
+        data['rating'] = 100
+        client = self.client_class()
+        client.credentials(HTTP_AUTHORIZATION=f'Token {self.user_token.key}')
+        url = reverse('productreview-list')
+        response = client.post(url, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('rating', response.data)
+
+    def test_create_review_with_negative_rating_400(self):
+        '''Тест проверяет создание отзыва с рейтингом,
+        который выше 5. Ожидаемый статус: 400'''
+        data = self.payload.copy()
+        data['rating'] = -10
+        client = self.client_class()
+        client.credentials(HTTP_AUTHORIZATION=f'Token {self.user_token.key}')
+        url = reverse('productreview-list')
+        response = client.post(url, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('rating', response.data)
+
+    def test_create_review_with_normal_rating_201(self):
+        '''Тест проверяет создание отзыва с рейтингом,
+        который выше 5. Ожидаемый статус: 400'''
+        data = self.payload.copy()
+        data['rating'] = 4
+        client = self.client_class()
+        client.credentials(HTTP_AUTHORIZATION=f'Token {self.user_token.key}')
+        url = reverse('productreview-list')
+        response = client.post(url, data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertIn('rating', response.data)
+
+    def test_update_as_anonymous_user(self):
+        client = self.client_class()
+        url = reverse('productreview-detail', args=(self.review1.id, ))
+        data = {'text': 'new_text'}
+        response = client.patch(url, data)
+        self.assertEqual(response.status_code, 401)
+
+    def test_update_as_not_author(self):
+        client = self.client_class()
+        client.credentials(HTTP_AUTHORIZATION=f'Token {self.user2_token.key}')
+        url = reverse('productreview-detail', args=(self.review1.id, ))
+        data = {'text': 'new_text'}
+        response = client.patch(url, data)
+        self.assertEqual(response.status_code, 403)
+
+    def test_update_as_admin(self):
+        client = self.client_class()
+        client.credentials(HTTP_AUTHORIZATION=f'Token {self.admin_token.key}')
+        url = reverse('productreview-detail', args=(self.review1.id,))
+        data = {'text': 'new_text'}
+        response = client.patch(url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual('new_text', response.data['text'])
+
+    def test_update_as_author(self):
+        client = self.client_class()
+        client.credentials(HTTP_AUTHORIZATION=f'Token {self.user_token.key}')
+        url = reverse('productreview-detail', args=(self.review1.id,))
+        data = {'text': 'new_text'}
+        response = client.patch(url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual('new_text', response.data['text'])
+
+
+
+
+
 
 
 # Test Driven Development (TDD)
 
 #TODO: pytest
+#TODO: Точка останова (Breakpoint)
+
+# фабрика данных (test factory)
+# FactoryBoy
+# Model Bakery
+
+# Фикстура
