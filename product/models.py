@@ -13,6 +13,9 @@ class Product(models.Model):
                               null=True,
                               blank=True)
 
+    class Meta:
+        ordering = ['title', 'price']
+
     def __str__(self):
         return self.title
 

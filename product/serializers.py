@@ -32,6 +32,14 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = ProductReview
         fields = ('id', 'author', 'product', 'text', 'rating', 'created_at')
 
+    def validate_product(self, product):
+        request = self.context.get('request')
+        user = request.user
+        if self.Meta.model.objects.filter(product=product,
+                                          author=user).exists():
+            raise serializers.ValidationError('Вы уже оставляли отзыв на данный продукт')
+        return product
+
     def validate_rating(self, rating):
         if rating not in range(1, 6):
             raise serializers.ValidationError('Рейтинг может быть от 1 до 5')
