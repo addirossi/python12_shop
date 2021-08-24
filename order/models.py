@@ -41,6 +41,7 @@ class Order(models.Model):
 
     class Meta:
         db_table = 'order'
+        ordering = ['-created_at']
 
 
 class OrderItem(models.Model):
