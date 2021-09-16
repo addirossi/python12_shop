@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+
+from celery.schedules import crontab
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -157,3 +159,17 @@ REST_FRAMEWORK = {
 }
 
 
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+REDIS_HOST = 'localhost'
+REDIS_PORT = '6379'
+CELERYBEAT_SCHEDULE = {
+    'notify_user': {
+        'task': 'account.tasks.notify_user',
+        'schedule': crontab()
+    }
+}

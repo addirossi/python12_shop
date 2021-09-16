@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.crypto import get_random_string
 
 
+
 class UserManager(BaseUserManager):
     def _create(self, email, password, **extra_fields):
         if not email:
